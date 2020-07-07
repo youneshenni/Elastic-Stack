@@ -1,0 +1,4 @@
+master:
+  hosts:
+    51.89.229.198:
+      ansible_user: debian
