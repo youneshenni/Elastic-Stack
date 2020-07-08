@@ -18,7 +18,7 @@
           - elasticsearch
           - kibana
         update_cache: yes
-    - name: Copy kibana.yml file (Kibana config) to allow remote connexions
+    - name: Copy kibana.yml file (Kibana config) to allow remote connections
       become: yes
       copy:
         src: files/kibana.yml
