@@ -18,6 +18,11 @@
           - elasticsearch
           - kibana
         update_cache: yes
+    - name: Copy kibana.yml file (Kibana config) to allow remote connexions
+      become: yes
+      copy:
+        src: files/kibana.yml
+        dest: /etc/kibana/kibana.yml
     - name: Enable ElasticSearch daemon
       become: yes
       systemd:
