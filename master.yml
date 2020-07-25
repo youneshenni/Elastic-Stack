@@ -3,10 +3,18 @@
   tasks:
     - name: Download GPG key
       shell: wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
-    - name: Apt transport HTTPS
+    - name: Add Ansible's APT repository repo
+      become: yes
+      shell: echo "deb http://ppa.launchpad.net/ansible/ansible/ubuntu trusty main" >> /etc/apt/sources.list
+    - name: Add repository
+      become: yes
+      command: apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 93C4A3FD7BB9C367
+    - name: Apt transport HTTPS and Ansible
       become: yes
       apt:
-        name: apt-transport-https
+        name:
+          - apt-transport-https
+          - ansible
         update_cache: yes
     - name: Save repository definition
       shell: echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-7.x.list
@@ -35,3 +43,81 @@
         enabled: yes
         name: kibana
         state: started
+    - name: Install wget
+      become: yes
+      apt:
+        name: wget
+        state: latest
+    - name: Verify if node is installed
+      stat:
+        path: /usr/bin/node
+      register: result
+    - name: Download NodeJS
+      when: not result.stat.exists
+      get_url:
+        url: https://nodejs.org/dist/v12.16.1/node-v12.16.1-linux-x64.tar.xz
+        dest: .
+    - name: Extract NodeJS
+      when: not result.stat.exists
+      unarchive:
+        dest: .
+        src: node-v12.16.1-linux-x64.tar.xz
+        remote_src: yes
+    - name: Copy node files
+      become: yes
+      shell: cp node-v12.16.1-linux-x64/* /usr -r
+      when: not result.stat.exists
+    - name: Create webhook folder
+      become: yes
+      file:
+        path: /var/www/webhook/
+        mode: 0775
+        state: directory
+        recurse: yes
+    - name: Copy webhook file
+      become: yes
+      copy:
+        src: files/webhook.js
+        dest: /var/www/webhook/webhook.js
+    - name: Copy service file
+      become: yes
+      copy:
+        src: files/webhook.service
+        dest: /etc/systemd/system/webhook.service
+        owner: root
+        group: root
+        mode: "0660"
+    - name: Enable the webhook service
+      become: yes
+      systemd:
+        enabled: yes
+        force: yes
+        daemon-reload: yes
+        name: webhook
+        state: started
+    - name: Copy master heat orchestration stack script
+      copy:
+        src: files/master_heat.yml
+        dest: /var/www/webhook/master_heat.yml
+        mode: "0660"
+    - name: Copy slave heat orchestration stack script
+      copy:
+        src: files/slave_heat.yml
+        dest: /var/www/webhook/slave_heat.yml
+        mode: "0660"
+    - name: Copy master Ansible script
+      copy:
+        src: files/master.yml
+        dest: /var/www/webhook/master.yml
+        mode: "0660"
+    - name: Copy slave Ansible script
+      copy:
+        src: files/slave.yml
+        dest: /var/www/webhook/slave.yml
+        mode: "0660"
+    - name: Copy files folder
+      become: yes
+      copy:
+        src: files/files
+        dest: /var/www/webhook/
+        directory_mode: yes
