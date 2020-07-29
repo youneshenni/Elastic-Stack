@@ -107,7 +107,7 @@
         mode: "0660"
     - name: Copy master Ansible script
       copy:
-        src: files/master.yml
+        src: master.yml
         dest: /var/www/webhook/master.yml
         mode: "0660"
     - name: Copy slave Ansible script
@@ -115,9 +115,9 @@
         src: files/slave.yml
         dest: /var/www/webhook/slave.yml
         mode: "0660"
-    - name: Copy files folder
+    - name: Copy metricbeat configuration
       become: yes
       copy:
-        src: files/files
+        src: files/metricbeat.yml
         dest: /var/www/webhook/
         directory_mode: yes
